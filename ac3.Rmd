@@ -1,0 +1,46 @@
+---
+title: 'AC3: Visualize Geolocated Data'
+author: "Arun Mishra(GTID-amishra302@gatech.edu)"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+
+# Electrification in India
+The below data set shows the electrification of India by villages in the state. I have used the publicly available India shape file and the electrification data available from the data.gov.in website.
+
+```{r message=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages('RColorBrewer',repos = "http://cran.us.r-project.org")
+install.packages('ROCR',repos = "http://cran.us.r-project.org")
+install.packages('rgeos',repos = "http://cran.us.r-project.org")
+install.packages('ggplot2',repos = "http://cran.us.r-project.org")
+install.packages('rgdal',repos = "http://cran.us.r-project.org")
+install.packages('tmap',repos = "http://cran.us.r-project.org")
+library(rgdal)
+library(tmap)
+library(RColorBrewer)
+library(ROCR)
+library(rgeos)
+library(ggplot2)
+library(dplyr)
+
+
+
+
+```
+## Read shape and Data File
+```{r warning=FALSE}
+df = read.csv('./india_electrified.csv')
+india <- readOGR("./IND_adm1.shp")
+```
+## Analysis - Find the Percent of Household Electrified 
+```{r tidy=TRUE,warning=FALSE}
+df_filter <- df%>%mutate(Electrified.Hh.Percent=(Electrified.Households/Total.Households))%>%na.omit()%>%select(State,Electrified.Hh.Percent)
+df_filter <- df_filter%>%mutate(State=case_when(State=='Odisha'~'Orissa',State=='Jammu & Kashmir'~'Jammu and Kashmir',TRUE~as.character(State)))
+india@data<- left_join(india@data,df_filter,by = c("NAME_1" = "State"))
+```
+##Electrified India:- % of Household Electrification in India
+```{r, fig.height=5, fig.width=5}
+tm_shape(india)+tm_fill(title = "% Electrification","Electrified.Hh.Percent",textNA = "Not Available")+tm_borders()+tm_layout(legend.outside = TRUE)
+```
